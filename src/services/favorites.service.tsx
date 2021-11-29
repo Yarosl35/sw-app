@@ -1,5 +1,7 @@
 const ENTITY_NAME = 'sw-app-favorites';
 
+type StorageItem = string | null;
+
 export interface IFavorites {
   cache: any;
   ids: string[];
@@ -11,7 +13,7 @@ class FavoritesService {
   }
 
   private initialize(): void {
-    const favorites: string | null = localStorage.getItem(ENTITY_NAME);
+    const favorites: StorageItem = localStorage.getItem(ENTITY_NAME);
     if (favorites) {
       return;
     }
@@ -30,13 +32,15 @@ class FavoritesService {
   }
 
   getFavorites(): IFavorites {
-    const favorites: string | null = localStorage.getItem(ENTITY_NAME);
+    const favorites: StorageItem = localStorage.getItem(ENTITY_NAME);
     const parsed = JSON.parse(String(favorites));
     return parsed;
   }
 
+  // Favor/unfavor characteers. Can be used both for adding new items to the
+  // storage and for removing values from there as well. 
   favor(data: any): void {
-    const favorites: string | null = localStorage.getItem(ENTITY_NAME);
+    const favorites: StorageItem = localStorage.getItem(ENTITY_NAME);
     const parsed = JSON.parse(String(favorites));
     const ids = new Set(parsed.ids);
 
@@ -54,8 +58,9 @@ class FavoritesService {
     localStorage.setItem(ENTITY_NAME, JSON.stringify(parsed));
   }
 
+  // Gets an amount of uniq favorites by gender string or callback parameter
   countByGender(gender: string | Function): number {
-    const favorites: string | null = localStorage.getItem(ENTITY_NAME);
+    const favorites: StorageItem = localStorage.getItem(ENTITY_NAME);
     const parsed = JSON.parse(String(favorites));
 
     let count = 0;
@@ -77,6 +82,7 @@ class FavoritesService {
     return count;
   }
 
+  // remove all items from localStorage and install empty structures
   clear(): void {
     this.installEmptyStorage();
   }

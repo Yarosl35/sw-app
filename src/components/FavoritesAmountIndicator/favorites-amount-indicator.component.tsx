@@ -9,7 +9,7 @@ const FavoritesAmountIndicator: React.FC<Props> = ({ label, value }) => {
   return (
     <styles.Container>
       <div className="amount-value">
-        { value }
+        <span role="note" aria-label={label}>{ value }</span>
       </div>
       <div className="label">
         { label }

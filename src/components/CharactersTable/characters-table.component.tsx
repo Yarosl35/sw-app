@@ -60,7 +60,7 @@ const CharactersTable: React.FC<Props> = ({ totalFans }) => {
   }, []);
 
   useEffect(() => {
-    // build data grid columns with the "Favorite" callback handler
+    // update columns to have all icons refreshed
     updateColumns();
     setEntities({ ...entities });
   }, [totalFans]);
@@ -72,7 +72,6 @@ const CharactersTable: React.FC<Props> = ({ totalFans }) => {
 
     // build data grid columns with the "Favorite" callback handler
     updateColumns();
-
     setEntities(data.allPeople);
   }, [data, favoritesContext]);
 
@@ -88,6 +87,7 @@ const CharactersTable: React.FC<Props> = ({ totalFans }) => {
   }
 
   const pageChangeHandler = (page: number) => {
+    // bi-directional pagination implementation using stack
     if (page < currentPage) {
       cursorsStack.current.pop();
     } else {
@@ -98,6 +98,8 @@ const CharactersTable: React.FC<Props> = ({ totalFans }) => {
     setPage(page);
   }
 
+  // search by current page only,
+  // swapi-graphql is missing search/filter functionality
   const searchHandler = (value: string) => {
     if (!value) {
       setEntities({
@@ -107,7 +109,7 @@ const CharactersTable: React.FC<Props> = ({ totalFans }) => {
       return;
     }
 
-    const result = entities.edges.filter((edge: any) => edge.node.name.toLowerCase().includes(value));
+    const result = entities.edges.filter((edge: any) => edge.node.name.toLowerCase().includes(value.toLowerCase().trim()));
     setEntities({
       ...entities,
       edges: result,

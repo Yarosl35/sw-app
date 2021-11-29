@@ -5,12 +5,12 @@ import _ from 'lodash';
 import SearchIcon from '../../../assets/glyphs/glyph_search_24.svg';
 import * as styles from './search.styles';
 
-interface ISearchProps {
+interface Props {
   onChange: Function;
   debounce?: number;
 }
 
-const Search: React.FC<ISearchProps> = (props) => {
+const Search: React.FC<Props> = (props) => {
   const changeHandler = _.debounce((event) => {
     props.onChange(event.target.value);
   }, props.debounce || 0);
