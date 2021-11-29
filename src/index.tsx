@@ -5,13 +5,13 @@ import {
   InMemoryCache,
   ApolloProvider,
 } from "@apollo/client";
-
 import reportWebVitals from './reportWebVitals';
 import Routes from './routes';
 import './index.scss';
 
 const client = new ApolloClient({
-  cache: new InMemoryCache(),  
+  connectToDevTools: true,
+  cache: new InMemoryCache(),
   uri: 'https://swapi-graphql.netlify.app/.netlify/functions/index',
 });
 

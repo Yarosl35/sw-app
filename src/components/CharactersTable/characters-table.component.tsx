@@ -1,19 +1,18 @@
-import { useState, useEffect } from 'react';
-import { DataGrid, GridColDef, GridValueGetterParams, GridRenderCellParams, GridColumnHeaderParams } from '@mui/x-data-grid';
-import { useQuery } from '@apollo/client';
+import { useState, useEffect, useRef } from 'react';
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { useLazyQuery, QueryLazyOptions } from '@apollo/client';
 
 import Search from './Search/search.component';
-import IconButton from '@mui/material/IconButton';
 import { GET_ALL_PEOPLE } from '../../graphql/queries/people';
 import HeartIcon from '../../assets/glyphs/glyph_heart_16.svg';
 import HeartIconFilled from '../../assets/glyphs/glyph_heart_fill_16.svg';
 import * as styles from './characters-table.styles';
 
 const columns: GridColDef[] = [
-  { 
-    field: 'id',    
+  {
+    field: 'id',
     sortable: false,
-    renderHeader: (params: GridColumnHeaderParams) => (
+    renderHeader: () => (
       <img src={HeartIconFilled} />
     ),
     renderCell: (params: GridRenderCellParams) => {
@@ -45,7 +44,7 @@ const columns: GridColDef[] = [
   },
   {
     field: 'homeworld',
-    headerName: 'Home World',    
+    headerName: 'Home World',
     sortable: false,
     flex: 1,
     renderCell: (params: GridRenderCellParams) => {
@@ -55,7 +54,7 @@ const columns: GridColDef[] = [
   },
   {
     field: 'species',
-    headerName: 'Species',    
+    headerName: 'Species',
     sortable: false,
     flex: 1,
     renderCell: (params: GridRenderCellParams) => {
@@ -65,36 +64,95 @@ const columns: GridColDef[] = [
   },
 ];
 
-// fetchMore({
-//   variables: {
-//     offset: data.feed.length
-//   },
-// })
-const DEFAULT_PAGE_SIZE = 10;
+const DEFAULT_PAGE_SIZE: number = 10;
+
+interface IConnectionProps {
+  edges: any[];
+  pageInfo?: any;
+  totalCount?: number;
+}
+
+interface IConnectionVariables {
+  first?: number;
+  after?: any;
+}
 
 export default function CharactersTable() {
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const { loading, error, data, fetchMore } = useQuery(GET_ALL_PEOPLE, {
+  const [currentPage, setPage] = useState(0);
+  const [entities, setEntities] = useState({ edges: [], totalCount: 0 } as IConnectionProps);
+  const cursorsStack = useRef([] as string[]);
+  const [getEntities, { loading, error, data, refetch }] = useLazyQuery(GET_ALL_PEOPLE, {
+    fetchPolicy: 'no-cache',
     variables: {
-      offset: 0,
-      limit: DEFAULT_PAGE_SIZE
-    },
+      first: DEFAULT_PAGE_SIZE,
+    } as IConnectionVariables
   });
+
+  useEffect(() => {
+    getEntities();
+  }, []);
+
+  useEffect(() => {
+    if (!data) {
+      return;
+    }
+
+    setEntities(data.allPeople);
+  }, [data]);
+
+  const fetchData = () => {
+    let variables = {
+      first: DEFAULT_PAGE_SIZE,
+      after: cursorsStack.current.length
+        ? cursorsStack.current[cursorsStack.current.length - 1]
+        : undefined,
+    };
+
+    refetch({ ...variables });
+  }
+
+  const pageChangeHandler = (page: number) => {
+    if (page < currentPage) {
+      cursorsStack.current.pop();
+    } else {
+      cursorsStack.current.push(entities.pageInfo.endCursor);
+    }
+
+    fetchData();
+    setPage(page);
+  }
+
+  const searchHandler = (value: string) => {
+    if (!value) {
+      setEntities({
+        ...entities,
+        edges: data.allPeople.edges,
+      });
+      return;
+    }
+
+    const result = entities.edges.filter((edge: any) => edge.node.name.toLowerCase().includes(value));
+    setEntities({
+      ...entities,
+      edges: result,
+    });
+  }
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error :(</p>;
 
-  console.log(data);
-
+  const nodes = entities.edges.map((edge: any) => edge.node);
   return (
     <styles.Container>
-      <Search />
+      <Search onChange={searchHandler} debounce={300} />
       <DataGrid
         autoHeight
-        rows={data.allPeople.people}
+        rows={nodes}
         columns={columns}
         paginationMode="server"
-        pageSize={pageSize}
+        pageSize={DEFAULT_PAGE_SIZE}
+        onPageChange={pageChangeHandler}
+        rowCount={entities.totalCount}
         disableColumnMenu
         disableColumnSelector
         disableSelectionOnClick

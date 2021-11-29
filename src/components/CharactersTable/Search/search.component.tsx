@@ -1,17 +1,27 @@
-import Input from '@mui/material/Input';
-import FormControl from '@mui/material/FormControl';
+import React, { useMemo } from 'react';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
+import _ from 'lodash';
 import SearchIcon from '../../../assets/glyphs/glyph_search_24.svg';
 import * as styles from './search.styles';
 
-const Search = () => {
+interface ISearchProps {
+  onChange: Function;
+  debounce?: number;
+}
+
+const Search: React.FC<ISearchProps> = (props) => {
+  const changeHandler = _.debounce((event) => {
+    props.onChange(event.target.value);
+  }, props.debounce || 0);
+
   return (
     <styles.Container>
       <TextField
         id="search-textfield"
         placeholder="Search"
-        fullWidth      
+        fullWidth
+        onChange={changeHandler}
         InputProps={{
           disableUnderline: true,
           startAdornment: (
