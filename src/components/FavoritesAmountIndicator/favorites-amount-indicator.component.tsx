@@ -1,14 +1,21 @@
 import * as styles from './favorites-amount-indicator.styles';
 
-export default function FavoritesAmountIndicator() {
+interface Props {
+  label: string;
+  value: number;
+}
+
+const FavoritesAmountIndicator: React.FC<Props> = ({ label, value }) => {
   return (
     <styles.Container>
       <div className="amount-value">
-        0
+        { value }
       </div>
       <div className="label">
-        Female fans
+        { label }
       </div>
     </styles.Container>
   );
 }
+
+export default FavoritesAmountIndicator;

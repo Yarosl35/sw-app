@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useLazyQuery } from '@apollo/client';
 
 import Search from './Search/search.component';
 import { IColumnsBuilder, buildColumns } from './columns';
 import FavoritesService from '../../services/favorites.service';
+import FavoritesContext from '../../contexts/favorites.context';
 import { GET_ALL_PEOPLE } from '../../graphql/queries/people';
 import * as styles from './characters-table.styles';
 
@@ -21,7 +22,12 @@ interface IConnectionVariables {
   after?: any;
 }
 
-export default function CharactersTable() {
+interface Props {
+  totalFans: number;
+}
+
+const CharactersTable: React.FC<Props> = ({ totalFans }) => {
+  const favoritesContext = useContext(FavoritesContext);
   const cursorsStack = useRef([] as string[]);
   const columns = useRef([] as GridColDef[]);
   const [currentPage, setPage] = useState(0);
@@ -33,10 +39,31 @@ export default function CharactersTable() {
     } as IConnectionVariables
   });
 
+  const updateColumns = () => {
+    const columnsBuilderParams: IColumnsBuilder = {
+      favorites: FavoritesService.getFavorites(),
+      onFavorited: (cellParams: GridRenderCellParams) => {
+        FavoritesService.favor(cellParams.row);
+        columns.current = buildColumns({
+          ...columnsBuilderParams,
+          favorites: FavoritesService.getFavorites(),
+        });
+        favoritesContext?.updateStatistics();
+      },
+    }
+    columns.current = buildColumns(columnsBuilderParams);
+  }
+
   useEffect(() => {
     // get entities lazily as soon as component was mounted
     getEntities();
   }, []);
+
+  useEffect(() => {
+    // build data grid columns with the "Favorite" callback handler
+    updateColumns();
+    setEntities({ ...entities });
+  }, [totalFans]);
 
   useEffect(() => {
     if (!data) {
@@ -44,21 +71,10 @@ export default function CharactersTable() {
     }
 
     // build data grid columns with the "Favorite" callback handler
-    const columnsBuilderParams: IColumnsBuilder = {
-      favorites: FavoritesService.getFavorites(),
-      onFavorited: (cellParams: GridRenderCellParams) => {
-        FavoritesService.favor(cellParams.row.id);
-        columns.current = buildColumns({
-          ...columnsBuilderParams,
-          favorites: FavoritesService.getFavorites(),
-        });
-        setEntities({ ...data.allPeople });
-      },
-    }
-    columns.current = buildColumns(columnsBuilderParams);
+    updateColumns();
 
     setEntities(data.allPeople);
-  }, [data]);
+  }, [data, favoritesContext]);
 
   const fetchData = () => {
     let variables = {
@@ -113,10 +129,13 @@ export default function CharactersTable() {
         pageSize={DEFAULT_PAGE_SIZE}
         onPageChange={pageChangeHandler}
         rowCount={entities.totalCount}
+        rowsPerPageOptions={[DEFAULT_PAGE_SIZE]}
         disableColumnMenu
         disableColumnSelector
         disableSelectionOnClick
       />
     </styles.Container>
   );
-}
+};
+
+export default CharactersTable;

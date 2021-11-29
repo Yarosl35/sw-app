@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import _ from 'lodash';
@@ -26,7 +26,7 @@ const Search: React.FC<ISearchProps> = (props) => {
           disableUnderline: true,
           startAdornment: (
             <InputAdornment position="start">
-              <img src={SearchIcon} />
+              <img src={SearchIcon} alt="Search icon" />
             </InputAdornment>
           ),
         }}
