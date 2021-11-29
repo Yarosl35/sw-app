@@ -8,4 +8,10 @@ export const Container = styled(Paper)`
 
 export const HeartIconButton = styled(IconButton)`
   left: -0.1rem;
+
+  #Glyphs {
+    g {
+      fill: #ff2a24;
+    }
+  }
 `;

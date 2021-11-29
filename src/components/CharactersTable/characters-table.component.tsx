@@ -1,68 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { useLazyQuery, QueryLazyOptions } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client';
 
 import Search from './Search/search.component';
+import { IColumnsBuilder, buildColumns } from './columns';
+import FavoritesService from '../../services/favorites.service';
 import { GET_ALL_PEOPLE } from '../../graphql/queries/people';
-import HeartIcon from '../../assets/glyphs/glyph_heart_16.svg';
-import HeartIconFilled from '../../assets/glyphs/glyph_heart_fill_16.svg';
 import * as styles from './characters-table.styles';
-
-const columns: GridColDef[] = [
-  {
-    field: 'id',
-    sortable: false,
-    renderHeader: () => (
-      <img src={HeartIconFilled} />
-    ),
-    renderCell: (params: GridRenderCellParams) => {
-      return (
-        <styles.HeartIconButton aria-label="favorite">
-          <img src={HeartIcon} />
-        </styles.HeartIconButton>
-      );
-    },
-  },
-  {
-    field: 'name',
-    headerName: 'Name',
-    minWidth: 200,
-    sortable: true,
-    flex: 1,
-  },
-  {
-    field: 'birthYear',
-    headerName: 'Birth Year',
-    flex: 1,
-    sortable: false,
-  },
-  {
-    field: 'gender',
-    headerName: 'Gender',
-    flex: 1,
-    sortable: false,
-  },
-  {
-    field: 'homeworld',
-    headerName: 'Home World',
-    sortable: false,
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => {
-      if (!params.row.homeworld) return;
-      return params.row.homeworld.name;
-    },
-  },
-  {
-    field: 'species',
-    headerName: 'Species',
-    sortable: false,
-    flex: 1,
-    renderCell: (params: GridRenderCellParams) => {
-      if (!params.row.species) return;
-      return params.row.species.name;
-    },
-  },
-];
 
 const DEFAULT_PAGE_SIZE: number = 10;
 
@@ -78,9 +22,10 @@ interface IConnectionVariables {
 }
 
 export default function CharactersTable() {
+  const cursorsStack = useRef([] as string[]);
+  const columns = useRef([] as GridColDef[]);
   const [currentPage, setPage] = useState(0);
   const [entities, setEntities] = useState({ edges: [], totalCount: 0 } as IConnectionProps);
-  const cursorsStack = useRef([] as string[]);
   const [getEntities, { loading, error, data, refetch }] = useLazyQuery(GET_ALL_PEOPLE, {
     fetchPolicy: 'no-cache',
     variables: {
@@ -89,6 +34,7 @@ export default function CharactersTable() {
   });
 
   useEffect(() => {
+    // get entities lazily as soon as component was mounted
     getEntities();
   }, []);
 
@@ -96,6 +42,20 @@ export default function CharactersTable() {
     if (!data) {
       return;
     }
+
+    // build data grid columns with the "Favorite" callback handler
+    const columnsBuilderParams: IColumnsBuilder = {
+      favorites: FavoritesService.getFavorites(),
+      onFavorited: (cellParams: GridRenderCellParams) => {
+        FavoritesService.favor(cellParams.row.id);
+        columns.current = buildColumns({
+          ...columnsBuilderParams,
+          favorites: FavoritesService.getFavorites(),
+        });
+        setEntities({ ...data.allPeople });
+      },
+    }
+    columns.current = buildColumns(columnsBuilderParams);
 
     setEntities(data.allPeople);
   }, [data]);
@@ -148,7 +108,7 @@ export default function CharactersTable() {
       <DataGrid
         autoHeight
         rows={nodes}
-        columns={columns}
+        columns={columns.current}
         paginationMode="server"
         pageSize={DEFAULT_PAGE_SIZE}
         onPageChange={pageChangeHandler}
