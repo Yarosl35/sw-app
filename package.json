@@ -1,7 +1,7 @@
 {
   "name": "sw-app",
   "version": "0.1.0",
-  "homepage": "http://Yarosl35.github.io/sw-app",
+  "homepage": "https://Yarosl35.github.io/sw-app",
   "dependencies": {
     "@apollo/client": "^3.5.5",
     "@emotion/react": "^11.6.0",
