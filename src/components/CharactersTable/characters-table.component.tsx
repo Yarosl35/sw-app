@@ -109,7 +109,7 @@ const CharactersTable: React.FC<Props> = ({ totalFans }) => {
       return;
     }
 
-    const result = entities.edges.filter((edge: any) => edge.node.name.toLowerCase().includes(value.toLowerCase().trim()));
+    const result = data.allPeople.edges.filter((edge: any) => edge.node.name.toLowerCase().includes(value.toLowerCase().trim()));
     setEntities({
       ...entities,
       edges: result,
