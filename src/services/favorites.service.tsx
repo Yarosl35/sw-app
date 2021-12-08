@@ -1,11 +1,8 @@
+import IFavorites from "../interfaces/favorites.interface";
+
 const ENTITY_NAME = 'sw-app-favorites';
 
 type StorageItem = string | null;
-
-export interface IFavorites {
-  cache: any;
-  ids: string[];
-}
 
 class FavoritesService {
   constructor() {
@@ -38,7 +35,7 @@ class FavoritesService {
   }
 
   // Favor/unfavor characteers. Can be used both for adding new items to the
-  // storage and for removing values from there as well. 
+  // storage and for removing values from there as well.
   favor(data: any): void {
     const favorites: StorageItem = localStorage.getItem(ENTITY_NAME);
     const parsed = JSON.parse(String(favorites));

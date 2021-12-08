@@ -1,11 +1,11 @@
 import * as styles from './favorites-amount-indicator.styles';
 
-interface Props {
+interface IFavoritesAmountIndicatorProps {
   label: string;
   value: number;
 }
 
-const FavoritesAmountIndicator: React.FC<Props> = ({ label, value }) => {
+const FavoritesAmountIndicator: React.FC<IFavoritesAmountIndicatorProps> = ({ label, value }) => {
   return (
     <styles.Container>
       <div className="amount-value">

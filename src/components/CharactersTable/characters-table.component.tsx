@@ -3,35 +3,27 @@ import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import { useLazyQuery } from '@apollo/client';
 
 import Search from './Search/search.component';
-import { IColumnsBuilder, buildColumns } from './columns';
+import ColumnsBuilder from './columns';
 import FavoritesService from '../../services/favorites.service';
 import FavoritesContext from '../../contexts/favorites.context';
+import IConnection from '../../interfaces/connection.interface';
+import IConnectionVariables from '../../interfaces/connection-variables.interface';
+import IColumnsBuilder from '../../interfaces/columns-builder.interface';
 import { GET_ALL_PEOPLE } from '../../graphql/queries/people';
 import * as styles from './characters-table.styles';
 
 const DEFAULT_PAGE_SIZE: number = 10;
 
-interface IConnectionProps {
-  edges: any[];
-  pageInfo?: any;
-  totalCount?: number;
-}
-
-interface IConnectionVariables {
-  first?: number;
-  after?: any;
-}
-
-interface Props {
+interface ICharactersTableProps {
   totalFans: number;
 }
 
-const CharactersTable: React.FC<Props> = ({ totalFans }) => {
+const CharactersTable: React.FC<ICharactersTableProps> = ({ totalFans }) => {
   const favoritesContext = useContext(FavoritesContext);
   const cursorsStack = useRef([] as string[]);
   const columns = useRef([] as GridColDef[]);
   const [currentPage, setPage] = useState(0);
-  const [entities, setEntities] = useState({ edges: [], totalCount: 0 } as IConnectionProps);
+  const [entities, setEntities] = useState({ edges: [], totalCount: 0 } as IConnection);
   const [getEntities, { loading, error, data, refetch }] = useLazyQuery(GET_ALL_PEOPLE, {
     fetchPolicy: 'no-cache',
     variables: {
@@ -44,14 +36,15 @@ const CharactersTable: React.FC<Props> = ({ totalFans }) => {
       favorites: FavoritesService.getFavorites(),
       onFavorited: (cellParams: GridRenderCellParams) => {
         FavoritesService.favor(cellParams.row);
-        columns.current = buildColumns({
+        columns.current = ColumnsBuilder({
           ...columnsBuilderParams,
           favorites: FavoritesService.getFavorites(),
         });
         favoritesContext?.updateStatistics();
       },
     }
-    columns.current = buildColumns(columnsBuilderParams);
+
+    columns.current = ColumnsBuilder(columnsBuilderParams);
   }
 
   useEffect(() => {
@@ -90,7 +83,8 @@ const CharactersTable: React.FC<Props> = ({ totalFans }) => {
     // bi-directional pagination implementation using stack
     if (page < currentPage) {
       cursorsStack.current.pop();
-    } else {
+    } else if (entities.pageInfo) {
+      // if page >= current page and entities.pageInfo was presented
       cursorsStack.current.push(entities.pageInfo.endCursor);
     }
 
@@ -109,7 +103,14 @@ const CharactersTable: React.FC<Props> = ({ totalFans }) => {
       return;
     }
 
-    const result = data.allPeople.edges.filter((edge: any) => edge.node.name.toLowerCase().includes(value.toLowerCase().trim()));
+    // filter characters on the frontend side using current page results
+    const result = data.allPeople.edges
+      .filter(
+        (edge: any) => edge.node.name
+          .toLowerCase()
+          .includes(value.toLowerCase().trim())
+      );
+
     setEntities({
       ...entities,
       edges: result,

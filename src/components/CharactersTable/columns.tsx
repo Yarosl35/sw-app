@@ -1,15 +1,10 @@
 import { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
-import { IFavorites } from '../../services/favorites.service';
+import IColumnsBuilder from '../../interfaces/columns-builder.interface';
 import { ReactComponent as HeartIcon } from '../../assets/glyphs/glyph_heart_16.svg';
 import { ReactComponent as HeartIconFilled } from '../../assets/glyphs/glyph_heart_fill_16.svg';
 import * as styles from './characters-table.styles';
 
-export interface IColumnsBuilder {
-  onFavorited: Function;
-  favorites: IFavorites;
-}
-
-export const buildColumns = (props: IColumnsBuilder) => {
+const buildColumns = (props: IColumnsBuilder) => {
   const favorHandler = (params: GridRenderCellParams) => () => {
     props.onFavorited(params);
   }
@@ -80,3 +75,5 @@ export const buildColumns = (props: IColumnsBuilder) => {
 
   return columns;
 }
+
+export default buildColumns;
